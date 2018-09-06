@@ -345,7 +345,7 @@ def print_qrcodetracker():
 
     im3 = create_label_im(**context)
 
-    i2.paste(im3, (xoffset, 0))
+    i2.paste(im3, (0, 0))
 
     context['width'] = 696
     context['height'] = context['qrsize']
