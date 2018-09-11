@@ -397,7 +397,6 @@ def print_image():
     from io import BytesIO
 
     # load image from the upload request .. 
-    return return_dict
     
     im = Image.open(BytesIO(r.content))
 
