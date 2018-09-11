@@ -406,6 +406,7 @@ def print_image():
 
     # load image from the upload request .. 
     
+    print(request)
     print(request.FILES)
     im = Image.open(BytesIO(request.content))
 
