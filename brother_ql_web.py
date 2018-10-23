@@ -4,7 +4,7 @@
 This is a web service to print labels on Brother QL label printers.
 """
 
-import sys, logging, random, json, argparse
+import sys, logging, random, json, argparse, os, io
 from io import BytesIO
 
 from bottle import run, route, get, post, response, request, jinja2_view as view, static_file, redirect
@@ -20,6 +20,8 @@ from font_helpers import get_fonts
 logger = logging.getLogger(__name__)
 
 LABEL_SIZES = [ (name, label_type_specs[name]['name']) for name in label_sizes]
+
+DEBUG = True
 
 try:
     with open('config.json') as fh:
@@ -51,9 +53,12 @@ def get_label_context(request):
     """ might raise LookupError() """
 
     d = request.params.decode() # UTF-8 decoded form data
-
-    font_family = d.get('font_family').rpartition('(')[0].strip()
-    font_style  = d.get('font_family').rpartition('(')[2].rstrip(')')
+    font_family = d.get('font_fEllers amily', None)
+    font_style  = d.get('font_family', None)
+    if font_family is not None:
+        font_family = font_family.rpartition('(')[0].strip()
+    if font_style is not None:
+        font_style  = font_style.rpartition('(')[2].rstrip(')')
     context = {
       'text':          d.get('text', None),
       'font_size': int(d.get('font_size', 100)),
@@ -187,6 +192,56 @@ def print_text():
         return return_dict
 
     im = create_label_im(**context)
+    if DEBUG: im.save('sample-out.png')
+
+    if context['kind'] == ENDLESS_LABEL:
+        rotate = 0 if context['orientation'] == 'standard' else 90
+    elif context['kind'] in (ROUND_DIE_CUT_LABEL, DIE_CUT_LABEL):
+        rotate = 'auto'
+
+    qlr = BrotherQLRaster(CONFIG['PRINTER']['MODEL'])
+    create_label(qlr, im, context['label_size'], threshold=context['threshold'], cut=True, rotate=rotate)
+
+    if not DEBUG:
+        try:
+            be = BACKEND_CLASS(CONFIG['PRINTER']['PRINTER'])
+            be.write(qlr.data)
+            be.dispose()
+            del be
+        except Exception as e:
+            return_dict['message'] = str(e)
+            logger.warning('Exception happened: %s', e)
+            return return_dict
+
+    return_dict['success'] = True
+    if DEBUG: return_dict['data'] = str(qlr.data)
+    return return_dict
+
+@route('/api/print/image', method='POST')
+def print_image():
+    """
+    API to print a label from image source
+
+    returns: JSON
+    """
+
+    return_dict = {'success': False}
+
+    try:
+        context = get_label_context(request)
+    except LookupError as e:
+        return_dict['error'] = e.msg
+        return return_dict
+
+    upload = request.files.get('upload')
+    
+    name, ext = os.path.splitext(upload.filename)
+    if ext not in ('.png', '.jpg', '.jpeg'):
+        return_dict['error'] = "File extension not allowed."
+        return return_dict
+
+    im = Image.open(io.BytesIO(upload.file.read()))
+    
     if DEBUG: im.save('sample-out.png')
 
     if context['kind'] == ENDLESS_LABEL:

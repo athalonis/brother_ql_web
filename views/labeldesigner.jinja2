@@ -110,6 +110,13 @@
         <label for="labelText">Label Text:</label>
         <textarea rows="7" id="labelText" class="form-control" onChange="preview()" onInput="preview()"></textarea>
       </fieldset>
+      <form action="/api/print/image" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="exampleFormControlFile1">Print Image</label>
+          <input type="file" class="form-control-file" id="exampleFormControlFile1" name="upload" >
+          <input class="btn btn-primary btn-block btn-lg" type="submit" value="Print image" />
+        </div>
+      </form>
     </div>
     <div class="col-md-4">
       <fieldset class="form-group">
