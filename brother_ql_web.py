@@ -250,7 +250,7 @@ def print_image():
         rotate = 'auto'
 
     qlr = BrotherQLRaster(CONFIG['PRINTER']['MODEL'])
-    create_label(qlr, im, context['label_size'], threshold=context['threshold'], cut=True, rotate=rotate)
+    create_label(qlr, im, context['label_size'], dither=True, cut=True, rotate=rotate)
 
     if not DEBUG:
         try:
