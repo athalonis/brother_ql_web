@@ -53,7 +53,7 @@ def get_label_context(request):
     """ might raise LookupError() """
 
     d = request.params.decode() # UTF-8 decoded form data
-    font_family = d.get('font_fEllers amily', None)
+    font_family = d.get('font_family', None)
     font_style  = d.get('font_family', None)
     if font_family is not None:
         font_family = font_family.rpartition('(')[0].strip()
