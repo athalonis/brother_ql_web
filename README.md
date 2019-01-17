@@ -1,5 +1,22 @@
 ## brother\_ql\_web
 
+_This fork adds api for printing images. The web interface has also been slightly modified to allow image printing.
+
+## Personal notes on installation 
+To install on raspberry pi using venv install the following dependencies:
+```
+apt install unp python3.7-venv 
+wget https://github.com/tobalr/brother_ql_web/archive/master.zip
+unp master.zip 
+rm master.zip 
+cd brother_ql_web-master/
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt 
+```
+
+
+
 This is a web service to print labels on Brother QL label printers.
 
 You need Python 3 for this software to work.
