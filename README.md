@@ -5,15 +5,35 @@ _This fork adds api for printing images. The web interface has also been slightl
 ## Personal notes on installation 
 To install on raspberry pi using venv install the following dependencies:
 ```
-apt install unp python3.7-venv 
-wget https://github.com/tobalr/brother_ql_web/archive/master.zip
-unp master.zip 
-rm master.zip 
-cd brother_ql_web-master/
+apt install unp python3.7-venv git
+git clone https://github.com/tobalr/brother_ql_web.git
+cd brother_ql_web/
 python3 -m venv venv
 source venv/bin/activate
+pip install -U pip
 pip install -r requirements.txt 
 ```
+
+Edit configuration
+
+To start server at boot
+Create /home/pi/launch_server.sh with content
+```
+#!/bin/bash
+cd /home/pi/brother_ql_web
+source venv/bin/activate
+./brother_ql_web.py
+```
+
+```
+chmod +x launch_server.sh
+```
+
+add before `exit 0` to /etc/rc.local
+```
+/home/pi/launch_server.sh &
+```
+
 
 
 
