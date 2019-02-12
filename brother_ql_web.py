@@ -61,11 +61,11 @@ def get_label_context(request):
         font_style  = font_style.rpartition('(')[2].rstrip(')')
     context = {
       'text':          d.get('text', None),
-      'font_size': int(d.get('font_size', 100)),
+      'font_size': int(d.get('font_size', CONFIG['LABEL']['DEFAULT_FONT_SIZE'])),
       'font_family':   font_family,
       'font_style':    font_style,
-      'label_size':    d.get('label_size', "62"),
-      'kind':          label_type_specs[d.get('label_size', "62")]['kind'],
+      'label_size':    d.get('label_size', CONFIG['LABEL']['DEFAULT_SIZE']),
+      'kind':          label_type_specs[d.get('label_size', CONFIG['LABEL']['DEFAULT_SIZE'])]['kind'],
       'margin':    int(d.get('margin', 10)),
       'threshold': int(d.get('threshold', 70)),
       'align':         d.get('align', 'center'),
