@@ -1,0 +1,11 @@
+version: "3.6"
+
+services:
+  web:
+    container_name: brother_ql_web
+    build: .
+    ports:
+      - "8081:8013"
+    restart: unless-stopped
+    volumes:
+      - "./config.json:/python/config.json"
