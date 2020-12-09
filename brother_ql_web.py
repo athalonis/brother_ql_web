@@ -4,11 +4,11 @@
 This is a web service to print labels on Brother QL label printers.
 """
 
-import sys, logging, random, json, argparse, os, io
+import sys, logging, random, json, argparse, os, io, math
 from io import BytesIO
 
 from bottle import run, route, get, post, response, request, jinja2_view as view, static_file, redirect
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 from brother_ql.devicedependent import models, label_type_specs, label_sizes
 from brother_ql.devicedependent import ENDLESS_LABEL, DIE_CUT_LABEL, ROUND_DIE_CUT_LABEL
@@ -198,7 +198,6 @@ def print_qrcode():
         return return_dict
 
     import requests
-    from PIL import Image, ImageOps
     from io import BytesIO
 
     r = requests.get('https://api.qrserver.com/v1/create-qr-code/', 
@@ -212,9 +211,11 @@ def print_qrcode():
     im = im.convert('RGB')
     im.save('last-qrcode.png')
 
-    i2 = ImageOps.expand(im, border=300, fill='#ffffff')
+    height=300
 
-    im = i2.crop((0,300, 696,300+context['qrsize']))
+    i2 = ImageOps.expand(im, border=height, fill='#ffffff')
+
+    im = i2.crop((0,height, 696,height+context['qrsize']))
 
     context['width'] = 696
     context['height'] = context['qrsize']
@@ -529,13 +530,37 @@ def print_image():
     upload = request.files.get('upload')
     
     name, ext = os.path.splitext(upload.filename)
-    if ext not in ('.png', '.jpg', '.jpeg'):
+    if ext not in ('.png', '.jpg', '.jpeg', '.pdf'):
         return_dict['error'] = "File extension not allowed."
         return return_dict
 
     im = Image.open(io.BytesIO(upload.file.read()))
+
+    width, height = im.size
+
+    #if context['label_size'] == '62x29':
+    #    lbl_width, lbl_height = (696, 271)
+    lbl_width = context['width']
+    lbl_height = context['height']
+    border = 20
+
+    if width > lbl_width - border:
+        im = im.resize((lbl_width - border, math.floor((lbl_height - border) * width/height)), Image.ANTIALIAS)
+        width, height = im.size
+    if height > lbl_height - border:
+        im = im.resize((math.floor((lbl_width - border) * height/width), lbl_height - border), Image.ANTIALIAS)
+        width, height = im.size
+
+    print_im = Image.new("RGB", (lbl_width, lbl_height))
+    print_im.paste( (255,255,255), [0, 0, lbl_width, lbl_height])
+    print_im.paste(im, (int((lbl_width-width)/2), int((lbl_height-height)/2)))
+
+    #im = ImageOps.expand(im, border=height, fill='#ffffff')
+    #im = i2.crop((0, 0, 696, height))
+
+    print("Label size {:}x{:}".format(context['width'], context['height']))
     
-    if DEBUG: im.save('sample-out.png')
+    if DEBUG: print_im.save('sample-out.png')
 
     if context['kind'] == ENDLESS_LABEL:
         rotate = 0 if context['orientation'] == 'standard' else 90
@@ -543,7 +568,7 @@ def print_image():
         rotate = 'auto'
 
     qlr = BrotherQLRaster(CONFIG['PRINTER']['MODEL'])
-    create_label(qlr, im, context['label_size'], dither=True, cut=True, rotate=rotate)
+    create_label(qlr, print_im, context['label_size'], dither=True, cut=True, rotate=rotate)
 
     if not DEBUG:
         try:
